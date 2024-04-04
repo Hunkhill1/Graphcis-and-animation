@@ -2,83 +2,86 @@
 
 #include "Angel.h"
 
-using namespace std;
+const int NumTimesToSubdivide = 4;
+const int NumTetrahedrons = 256;            // 4^5 tetrahedrons
+const int NumTriangles = 4*NumTetrahedrons;  // 4 triangles / tetrahedron
+const int NumVertices = 3*NumTriangles;      // 3 vertices / triangle
 
-// const int NumTimesToSubdivide = 5;
-const int NumTriangles = 2;  // 3^5 triangles generated
-const int NumVertices  = 3 * NumTriangles;
+vec3 points[NumVertices];
+vec3 colors[NumVertices];
 
-GLint timeParam;
-
-vec3 color= vec3(1.0, 0.0, 0.0);
-//When drawing triangles, need to specify how many triangles we want to draw
-
-// vec2 points[NumVertices];
-// int Index = 0;
-
-
+int  Index = 0;
 
 //----------------------------------------------------------------------------
 
-// void
-// triangle( const vec2& a, const vec2& b, const vec2& c )
-// {
-//     points[Index++] = a;
-//     points[Index++] = b;
-//     points[Index++] = c;
-// }
-
-
-
-
-vec3 points[NumVertices] = {
-    vec3(-0.5, -0.5, 0.0), vec3(-0.5, 0.5, 0.0), vec3(0.5, -0.5, 0.0),
-    vec3(0.5, 0.5, 0.0),   vec3(0.5, -0.5, 0.0), vec3(-0.5, 0.5, 0.0)
-};
-
-vec3 colors[NumVertices] = {
-    vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 0.0),
-    vec3(0.0, 1.0, 1.0), vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 1.0),
-};
-
-//Specify how many triangles along with vertices here
+void
+triangle( const vec3& a, const vec3& b, const vec3& c, const int color )
+{
+    static vec3  base_colors[] = {
+	vec3( 1.0, 0.0, 0.0 ),
+	vec3( 0.0, 1.0, 0.0 ),
+	vec3( 0.0, 0.0, 1.0 ),
+	vec3( 0.0, 0.0, 0.0 )
+    };
+    points[Index] = a;  colors[Index] = base_colors[color];  Index++;
+    points[Index] = b;  colors[Index] = base_colors[color];  Index++;
+    points[Index] = c;  colors[Index] = base_colors[color];  Index++;
+}
 
 //----------------------------------------------------------------------------
 
-// void
-// divide_triangle( const vec2& a, const vec2& b, const vec2& c, int count )
-// {
-//     if ( count > 0 ) {
-//         vec2 v0 = ( a + b ) / 2.0;
-//         vec2 v1 = ( a + c ) / 2.0;
-//         vec2 v2 = ( b + c ) / 2.0;
-//         divide_triangle( a, v0, v1, count - 1 );
-//         divide_triangle( c, v1, v2, count - 1 );
-//         divide_triangle( b, v2, v0, count - 1 );
-//     }
-//     else {
-//         triangle( a, b, c );    // draw triangle at end of recursion
-//     }
-// }
+void
+tetra( const vec3& a, const vec3& b, const vec3& c, const vec3& d )
+{
+    triangle( a, b, c, 0 );
+    triangle( a, c, d, 1 );
+    triangle( a, d, b, 2 );
+    triangle( b, d, c, 3 );
+}
 
-// void draw_triangle() {
-//     triangle(13.5, 15.5, 19.5);
-//     triangle(50, 35, 19);
-// }
+//----------------------------------------------------------------------------
 
-
-
-
+void
+divide_tetra( const vec3& a, const vec3& b,
+	      const vec3& c, const vec3& d, int count )
+{
+    if ( count > 0 ) {
+        vec3 v0 = ( a + b ) / 2.0;
+        vec3 v1 = ( a + c ) / 2.0;
+        vec3 v2 = ( a + d ) / 2.0;
+	vec3 v3 = ( b + c ) / 2.0;
+	vec3 v4 = ( c + d ) / 2.0;
+	vec3 v5 = ( b + d ) / 2.0;
+        divide_tetra( a, v0, v1, v2, count - 1 );
+        divide_tetra( v0, b, v3, v5, count - 1 );
+        divide_tetra( v1, v3, c, v4, count - 1 );
+	divide_tetra( v2, v5, v4, d, count - 1 );
+    }
+    else {
+        tetra( a, b, c, d );    // draw tetrahedron at end of recursion
+    }
+}
 
 //----------------------------------------------------------------------------
 
 void
 init( void )
 {
+    vec3 vertices[4] = {
+	vec3( 0.0, 0.0, -1.0 ),
+	vec3( 0.0, 0.942809, 0.333333 ),
+	vec3( -0.816497, -0.471405, 0.333333 ),
+	vec3( 0.816497, -0.471405, 0.333333 )
+    };	
+
+    // Subdivide the original tetrahedron
+    divide_tetra( vertices[0], vertices[1], vertices[2], vertices[3],
+		  NumTimesToSubdivide );
+
     // Create a vertex array object
     GLuint vao;
-    glGenVertexArrays( 1, &vao );
-    glBindVertexArray( vao );
+    glGenVertexArraysAPPLE( 1, &vao );
+    glBindVertexArrayAPPLE( vao );
 
     // Create and initialize a buffer object
     GLuint buffer;
@@ -99,10 +102,8 @@ init( void )
     glBufferSubData( GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors );
 
     // Load shaders and use the resulting shader program
-    GLuint program = InitShader( "vrotate2d.glsl", "fshader24.glsl" );
+    GLuint program = InitShader( "vshader24.glsl", "fshader24.glsl" );
     glUseProgram( program );
-
-    
 
     // Initialize the vertex position attribute from the vertex shader    
     GLuint vPosition = glGetAttribLocation( program, "vPosition" );
@@ -119,11 +120,7 @@ init( void )
     glVertexAttribPointer( vColor, 3, GL_FLOAT, GL_FALSE, 0,
                            BUFFER_OFFSET(sizeof(points)) );
 
-    //glEnable( GL_DEPTH_TEST );
-
-    // Initialize the vertex position attribute from the vertex shader
-    timeParam = glGetUniformLocation(program, "time");
-    color = glGetUniformLocation(program, "vColor");
+    glEnable( GL_DEPTH_TEST );
 
     glClearColor( 1.0, 1.0, 1.0, 1.0 ); /* white background */
 }
@@ -133,11 +130,8 @@ init( void )
 void
 display( void )
 {
-    glClear( GL_COLOR_BUFFER_BIT );
-    glUniform1f( timeParam, glutGet(GLUT_ELAPSED_TIME) );
-    glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    glutSwapBuffers();
-}
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); glDrawArrays( GL_TRIANGLES, 0, NumVertices );
+    glFlush(); }
 
 //----------------------------------------------------------------------------
 
@@ -151,25 +145,15 @@ keyboard( unsigned char key, int x, int y )
     }
 }
 
-void idle(void){
-    glutPostRedisplay();
-
-}
-
 //----------------------------------------------------------------------------
 
 int
 main( int argc, char **argv )
 {
     glutInit( &argc, argv );
-    glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE);
+    glutInitDisplayMode( GLUT_RGBA | GLUT_DEPTH );
     glutInitWindowSize( 512, 512 );
-    glutInitContextVersion( 3, 2 );
-    glutInitContextProfile( GLUT_CORE_PROFILE );
     glutCreateWindow( "Simple GLSL example" );
-    glutIdleFunc(idle);
-
-    glewInit();
 
     init();
 

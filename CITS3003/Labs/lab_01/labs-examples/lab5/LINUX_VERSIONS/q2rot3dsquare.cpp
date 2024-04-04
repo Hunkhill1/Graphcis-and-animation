@@ -1,34 +1,12 @@
 /* sierpinski gasket with vertex arrays */
 
 #include "Angel.h"
-
+GLuint transformID;
 using namespace std;
 
 // const int NumTimesToSubdivide = 5;
 const int NumTriangles = 2;  // 3^5 triangles generated
 const int NumVertices  = 3 * NumTriangles;
-
-GLint timeParam;
-
-vec3 color= vec3(1.0, 0.0, 0.0);
-//When drawing triangles, need to specify how many triangles we want to draw
-
-// vec2 points[NumVertices];
-// int Index = 0;
-
-
-
-//----------------------------------------------------------------------------
-
-// void
-// triangle( const vec2& a, const vec2& b, const vec2& c )
-// {
-//     points[Index++] = a;
-//     points[Index++] = b;
-//     points[Index++] = c;
-// }
-
-
 
 
 vec3 points[NumVertices] = {
@@ -41,30 +19,7 @@ vec3 colors[NumVertices] = {
     vec3(0.0, 1.0, 1.0), vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 1.0),
 };
 
-//Specify how many triangles along with vertices here
 
-//----------------------------------------------------------------------------
-
-// void
-// divide_triangle( const vec2& a, const vec2& b, const vec2& c, int count )
-// {
-//     if ( count > 0 ) {
-//         vec2 v0 = ( a + b ) / 2.0;
-//         vec2 v1 = ( a + c ) / 2.0;
-//         vec2 v2 = ( b + c ) / 2.0;
-//         divide_triangle( a, v0, v1, count - 1 );
-//         divide_triangle( c, v1, v2, count - 1 );
-//         divide_triangle( b, v2, v0, count - 1 );
-//     }
-//     else {
-//         triangle( a, b, c );    // draw triangle at end of recursion
-//     }
-// }
-
-// void draw_triangle() {
-//     triangle(13.5, 15.5, 19.5);
-//     triangle(50, 35, 19);
-// }
 
 
 
@@ -99,10 +54,8 @@ init( void )
     glBufferSubData( GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors );
 
     // Load shaders and use the resulting shader program
-    GLuint program = InitShader( "vrotate2d.glsl", "fshader24.glsl" );
+    GLuint program = InitShader( "vshader24sq3d.glsl", "fshader24.glsl" );
     glUseProgram( program );
-
-    
 
     // Initialize the vertex position attribute from the vertex shader    
     GLuint vPosition = glGetAttribLocation( program, "vPosition" );
@@ -121,10 +74,7 @@ init( void )
 
     //glEnable( GL_DEPTH_TEST );
 
-    // Initialize the vertex position attribute from the vertex shader
-    timeParam = glGetUniformLocation(program, "time");
-    color = glGetUniformLocation(program, "vColor");
-
+    transformID = glGetUniformLocation(program, "multipliers");
     glClearColor( 1.0, 1.0, 1.0, 1.0 ); /* white background */
 }
 
@@ -134,8 +84,37 @@ void
 display( void )
 {
     glClear( GL_COLOR_BUFFER_BIT );
-    glUniform1f( timeParam, glutGet(GLUT_ELAPSED_TIME) );
+
+    float angle = 0.001 * glutGet(GLUT_ELAPSED_TIME);
+
+    mat3 mTransform3 = mat3( vec3(cos(angle), -sin(angle), 0.0),  // Rotation around x-axis
+                             vec3(sin(angle), cos(angle), 0.0),   // Rotation around y-axis
+                             vec3(0.0, 0.0, 1.0) );    
+
+    glUniformMatrix3fv(transformID, 1, GL_TRUE, mTransform3);
     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
+
+    mat3 mTransform1 = mat3( vec3(1.0, 0.0, 0.0),       // No rotation around x-axis
+                             vec3(0.0, cos(angle), -sin(angle)),  // Rotation around y-axis
+                             vec3(0.0, sin(angle), cos(angle)) );
+
+    glUniformMatrix3fv(transformID, 1, GL_TRUE, mTransform1);
+    glDrawArrays( GL_TRIANGLES, 0, NumVertices );
+
+    mat3 mTransform = mat3( vec3(cos(angle),  0.0, sin(angle)),
+                                     vec3(0.0,         1.0,        0.0),
+                                     vec3(-sin(angle), 0.0, cos(angle)) );
+
+    glUniformMatrix3fv(transformID, 1, GL_TRUE, mTransform); 
+        glDrawArrays( GL_TRIANGLES, 0, NumVertices );
+
+    
+
+    
+    
+        
+        
+    
     glutSwapBuffers();
 }
 
@@ -151,7 +130,7 @@ keyboard( unsigned char key, int x, int y )
     }
 }
 
-void idle(void){
+void idle(void){ //added this in as well for lab 3
     glutPostRedisplay();
 
 }
@@ -162,12 +141,12 @@ int
 main( int argc, char **argv )
 {
     glutInit( &argc, argv );
-    glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE);
+    glutInitDisplayMode( GLUT_RGBA );
     glutInitWindowSize( 512, 512 );
     glutInitContextVersion( 3, 2 );
     glutInitContextProfile( GLUT_CORE_PROFILE );
     glutCreateWindow( "Simple GLSL example" );
-    glutIdleFunc(idle);
+    glutIdleFunc( idle );
 
     glewInit();
 
