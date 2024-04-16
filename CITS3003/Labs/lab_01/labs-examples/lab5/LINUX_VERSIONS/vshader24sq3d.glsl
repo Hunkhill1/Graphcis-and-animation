@@ -4,11 +4,11 @@ in  vec3 vPosition;
 in  vec3 vColor;
 out vec4 color;
 
-uniform mat3 multipliers;
+uniform mat4 multipliers;
 
 void main()
 {
-    gl_Position = vec4(multipliers * vPosition,  1.0);
+    gl_Position = multipliers * vec4(vPosition, 1.0f);
 
     color = vec4(vColor, 1.0);
 
