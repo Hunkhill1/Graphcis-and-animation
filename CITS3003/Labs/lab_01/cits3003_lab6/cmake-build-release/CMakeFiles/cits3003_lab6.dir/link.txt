@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/cits3003_lab6.dir/main.cpp.o CMakeFiles/cits3003_lab6.dir/helpers/ShaderHelper.cpp.o CMakeFiles/cits3003_lab6.dir/helpers/imgui/ImGuiImpl.cpp.o CMakeFiles/cits3003_lab6.dir/helpers/imgui/ImGuiManager.cpp.o -o cits3003_lab6  lib/glfw/src/libglfw3.a lib/glad/libglad.a lib/imgui/libimgui.a /usr/lib/x86_64-linux-gnu/librt.a -lm -ldl 
