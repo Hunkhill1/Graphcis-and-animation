@@ -50,8 +50,10 @@ const int NUM_SIDES = 6;
 const int NUM_TRIANGLES = 2 * NUM_SIDES;
 const int NUM_VERTICES = 3 * NUM_TRIANGLES;
 
+
+
 // This time create a struct representing the data of a single vertex, because we will be
-// interleaving the vertex attributes instead of laying it out with each attribute together like before.
+// interleaving the vertex attributes instead of laying it out with each attribute together like before
 struct Vertex {
     glm::vec3 position;
     glm::vec3 colour;
@@ -133,7 +135,7 @@ void init() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, colour));
 
-    xyz_multipliers_location = glGetUniformLocation(program, "xyzMultipliers");
+    xyz_multipliers_location = glGetUniformLocation(program, "xyzwMultipliers");
 
     // We need to enable the depth test to discard fragments that are behind
     // previously drawn fragments for the same pixel.
@@ -145,6 +147,9 @@ void init() {
 bool animate_rotation = true;
 glm::vec3 rotation_angles{0.0f};
 glm::vec3 rotation_speed{1.0f};
+glm::vec3 scale_factors{0.250f, 1.0f, 1.0f};
+
+// scale_factors = glm::vec3(1.0f);
 
 void ui() {
     // Create an ImGUI window, the function returns true if the window is expanded and false if collapsed,
@@ -159,6 +164,9 @@ void ui() {
 
         // Add a slider to edit the 3 components of the rotation_angle vector, setting the rang to be [0, 2pi]
         ImGui::SliderFloat3("Rotation Angle", &rotation_angles[0], 0.0f, 2.0f * (float) M_PI);
+
+        // Add a slider to edit the 3 components of the scale_factors vector, setting the range to be [0.1, 2.0]
+        ImGui::DragFloat3("Scale Factors", &scale_factors[0], 0.1f);
 
     }
     // Since ImGUI is an immediate mode UI with hidden internal state, we need to explicitly tell it that
@@ -192,32 +200,33 @@ void draw(GLFWwindow *window, ImGuiManager& imgui_manager) {
     // Note that the glm matrix constructor takes column vectors,
     // so it visually appears to be the transpose of the actual matrix.
     auto x_angle = rotation_angles.x;
-    glm::mat3 x_rotation = glm::mat3(
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, std::cos(x_angle), std::sin(x_angle)},
-            {0.0f, -std::sin(x_angle), std::cos(x_angle)}
-    );
+
+    glm::mat4 x_rotation = glm::rotate(rotation_angles.x, glm::vec3{1.0f, 0.0f,0.0f});
+
     auto y_angle = rotation_angles.y;
-    glm::mat3 y_rotation = glm::mat3(
-            {std::cos(y_angle), 0.0, -std::sin(y_angle)},
-            {0.0f, 1.0f, 0.0f},
-            {std::sin(y_angle), 0.0, std::cos(y_angle)}
-    );
+    
+    glm::mat4 y_rotation = glm::rotate(rotation_angles.y, glm::vec3{0.0f, 1.0f, 0.0f});
+
+    auto z_angle = rotation_angles.z;
+
+    glm::mat4 z_rotation = glm::rotate(rotation_angles.z, glm::vec3{0.0f, 0.0f, 1.0f});
 
     // Scale the x by 0.25
-    glm::mat3 shrink_x = glm::mat3(
-            {0.25f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.0f, 0.0f, 1.0f}
-    );
+    // glm::mat3 shrink_x = glm::mat3(
+    //         {0.25f, 0.0f, 0.0f},
+    //         {0.0f, 1.0f, 0.0f},
+    //         {0.0f, 0.0f, 1.0f}
+    // );
+    glm::mat4 scale_matrix = glm::scale(scale_factors);
+    
 
     // Since we want the shrink to handle in model space we put in on the right,
     // because matrices are "applied" right to left in the conventions most commonly used with OpenGL
-    glm::mat3 combined_matrix = y_rotation * x_rotation * shrink_x;
+    glm::mat4 combined_matrix =  scale_matrix * z_rotation * y_rotation * x_rotation;
 
     // NOTE: Since glm was designed with OpenGL in mind, it stores matrices in column major, so
     // the is no need to transpose, hence using GL_FALSE
-    glUniformMatrix3fv(xyz_multipliers_location, 1, GL_FALSE, &combined_matrix[0][0]);
+    glUniformMatrix4fv(xyz_multipliers_location, 1, GL_FALSE, &combined_matrix[0][0]);
 
     glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
 

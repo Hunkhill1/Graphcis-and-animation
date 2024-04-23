@@ -5,11 +5,10 @@ layout(location = 1) in vec3 vColor;
 
 out vec4 color;
 
-uniform mat3 xyzMultipliers;
+uniform mat4 xyzwMultipliers;
 
 void main()
 {
-    gl_Position = vec4(xyzMultipliers * vPosition, 1.0);
-
+    gl_Position = xyzwMultipliers * vec4(vPosition, 1.0f);
     color = vec4( vColor, 1.0 );
 }

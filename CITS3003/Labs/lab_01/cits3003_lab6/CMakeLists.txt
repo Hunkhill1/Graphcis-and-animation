@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(cits3003_lab6 main.cpp helpers/ShaderHelper.cpp helpers/imgui/ImGuiImpl.cpp helpers/imgui/ImGuiManager.cpp)
 
+
 # Some optional flags to turn max warnings on, and also turn warnings into errors, if you feel like being pedantic
 #if(MSVC)
 #    target_compile_options(cits3003_lab6 PRIVATE "/W3" "/WX" "/D_CRT_SECURE_NO_WARNINGS")

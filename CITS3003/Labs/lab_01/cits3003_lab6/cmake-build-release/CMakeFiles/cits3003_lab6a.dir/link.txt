@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/cits3003_lab6a.dir/q1amat4.cpp.o CMakeFiles/cits3003_lab6a.dir/helpers/ShaderHelper.cpp.o CMakeFiles/cits3003_lab6a.dir/helpers/imgui/ImGuiImpl.cpp.o CMakeFiles/cits3003_lab6a.dir/helpers/imgui/ImGuiManager.cpp.o -o cits3003_lab6a 
