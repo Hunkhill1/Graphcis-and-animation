@@ -404,6 +404,4 @@ CMakeFiles/cits3003_lab6.dir/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
  /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
  /home/sahil/Graphcis-and-animation/CITS3003/Labs/lab_01/cits3003_lab6/lib/imgui/./imgui/backends/imgui_impl_opengl3.h \
- /home/sahil/Graphcis-and-animation/CITS3003/Labs/lab_01/cits3003_lab6/lib/imgui/./imgui/backends/imgui_impl_glfw.h \
- /usr/include/c++/13/deque /usr/include/c++/13/bits/stl_deque.h \
- /usr/include/c++/13/bits/deque.tcc
+ /home/sahil/Graphcis-and-animation/CITS3003/Labs/lab_01/cits3003_lab6/lib/imgui/./imgui/backends/imgui_impl_glfw.h

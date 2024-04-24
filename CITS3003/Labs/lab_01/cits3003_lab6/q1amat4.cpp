@@ -211,18 +211,13 @@ void draw(GLFWwindow *window, ImGuiManager& imgui_manager) {
 
     glm::mat4 z_rotation = glm::rotate(rotation_angles.z, glm::vec3{0.0f, 0.0f, 1.0f});
 
-    // Scale the x by 0.25
-    // glm::mat3 shrink_x = glm::mat3(
-    //         {0.25f, 0.0f, 0.0f},
-    //         {0.0f, 1.0f, 0.0f},
-    //         {0.0f, 0.0f, 1.0f}
-    // );
+    
     glm::mat4 scale_matrix = glm::scale(scale_factors);
     
 
     // Since we want the shrink to handle in model space we put in on the right,
     // because matrices are "applied" right to left in the conventions most commonly used with OpenGL
-    glm::mat4 combined_matrix =  scale_matrix * z_rotation * y_rotation * x_rotation;
+    glm::mat4 combined_matrix =   z_rotation * y_rotation * x_rotation *scale_matrix ;
 
     // NOTE: Since glm was designed with OpenGL in mind, it stores matrices in column major, so
     // the is no need to transpose, hence using GL_FALSE
