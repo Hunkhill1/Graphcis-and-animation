@@ -37,70 +37,70 @@ using uint = unsigned int;
 // Include some code that helps with using ImGui
 #include "helpers/imgui/ImGuiManager.h"
 
+#include <deque>
+
 // Some constant window properties we define here for now, since we currently don't handle
 // window resizing.
-#define WINDOW_WIDTH 512
-#define WINDOW_HEIGHT 512
+// #define WINDOW_WIDTH 512
+// #define WINDOW_HEIGHT 512
 #define WINDOW_TITLE "Lab 6"
 
 // A flag to enable or disable vsync (aka frame limiting)
 #define V_SYNC false
 
+
+int window_width = 512;
+int window_height = 512;
+
+
+ std::deque<float> frame_times{};
+
 const int NUM_SIDES = 6;
 const int NUM_TRIANGLES = 2 * NUM_SIDES;
-const int NUM_VERTICES = 3 * NUM_TRIANGLES;
-
-
+const int NUM_ELEMENTS = 3 * NUM_TRIANGLES;
+const int NUM_VERTICES = 8;
 
 // This time create a struct representing the data of a single vertex, because we will be
-// interleaving the vertex attributes instead of laying it out with each attribute together like before
+// interleaving the vertex attributes instead of laying it out with each attribute
+// together like before.
 struct Vertex {
     glm::vec3 position;
     glm::vec3 colour;
 };
 
+
 Vertex vertices[NUM_VERTICES] = {
-        Vertex{glm::vec3(-0.5, -0.5, 0.5), glm::vec3(1.0, 0.0, 0.0)},
-        Vertex{glm::vec3(0.5, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0)},
-        Vertex{glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 1.0)},
-        Vertex{glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(0.5, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0)},
+        Vertex { glm::vec3{ -0.5, -0.5, -0.5 }, glm::vec3{0.0, 0.0, 0.0} },
+        Vertex { glm::vec3{ -0.5, -0.5,  0.5 }, glm::vec3{0.0, 0.0, 1.0} },
+        Vertex { glm::vec3{ -0.5,  0.5, -0.5 }, glm::vec3{0.0, 1.0, 0.0} },
+        Vertex { glm::vec3{ -0.5,  0.5,  0.5 }, glm::vec3{0.0, 1.0, 1.0} },
 
-        Vertex{glm::vec3(-0.5, -0.5, -0.5), glm::vec3(1.0, 0.0, 0.0)},
-        Vertex{glm::vec3(0.5, -0.5, -0.5), glm::vec3(0.0, 0.0, 1.0)},
-        Vertex{glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(0.5, 0.5, -0.5), glm::vec3(0.0, 1.0, 1.0)},
-        Vertex{glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(0.5, -0.5, -0.5), glm::vec3(0.0, 0.0, 1.0)},
+        Vertex { glm::vec3{  0.5, -0.5, -0.5 }, glm::vec3{1.0, 0.0, 0.0} },
+        Vertex { glm::vec3{  0.5, -0.5,  0.5 }, glm::vec3{1.0, 0.0, 1.0} },
+        Vertex { glm::vec3{  0.5,  0.5, -0.5 }, glm::vec3{1.0, 1.0, 0.0} },
+        Vertex { glm::vec3{  0.5,  0.5,  0.5 }, glm::vec3{1.0, 1.0, 1.0} }
+};
 
-        Vertex{glm::vec3(0.5, -0.5, -0.5), glm::vec3(1.0, 0.0, 0.0)},
-        Vertex{glm::vec3(0.5, 0.5, -0.5), glm::vec3(0.0, 0.0, 1.0)},
-        Vertex{glm::vec3(0.5, -0.5, 0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 1.0)},
-        Vertex{glm::vec3(0.5, -0.5, 0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(0.5, 0.5, -0.5), glm::vec3(0.0, 0.0, 1.0)},
+// The following builds triangles from the 8 vertices above,
+// using numbers 0-7 to refer to the element positions in the array
+uint elements[NUM_ELEMENTS] = {
+        1, 5, 3,
+        7, 3, 5,
 
-        Vertex{glm::vec3(-0.5, -0.5, -0.5), glm::vec3(1.0, 0.0, 0.0)},
-        Vertex{glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0.0, 0.0, 1.0)},
-        Vertex{glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 1.0)},
-        Vertex{glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0.0, 0.0, 1.0)},
+        0, 4, 2,
+        6, 2, 4,
 
-        Vertex{glm::vec3(-0.5, 0.5, -0.5), glm::vec3(1.0, 0.0, 0.0)},
-        Vertex{glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0.0, 0.0, 1.0)},
-        Vertex{glm::vec3(0.5, 0.5, -0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 1.0)},
-        Vertex{glm::vec3(0.5, 0.5, -0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0.0, 0.0, 1.0)},
+        4, 6, 5,
+        7, 5, 6,
 
-        Vertex{glm::vec3(-0.5, -0.5, -0.5), glm::vec3(1.0, 0.0, 0.0)},
-        Vertex{glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0)},
-        Vertex{glm::vec3(0.5, -0.5, -0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(0.5, -0.5, 0.5), glm::vec3(0.0, 1.0, 1.0)},
-        Vertex{glm::vec3(0.5, -0.5, -0.5), glm::vec3(0.0, 1.0, 0.0)},
-        Vertex{glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0)}
+        0, 2, 1,
+        3, 1, 2,
+
+        2, 3, 6,
+        7, 6, 3,
+
+        0, 1, 4,
+        5, 4, 1
 };
 
 int xyzw_multipliers_location;
@@ -135,6 +135,12 @@ void init() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, colour));
 
+    // ADDED: load the element index data
+    uint element_buffer;
+    glGenBuffers(1, &element_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * NUM_ELEMENTS, elements, GL_STATIC_DRAW);
+
     xyzw_multipliers_location = glGetUniformLocation(program, "xyzwMultipliers");
 
     // We need to enable the depth test to discard fragments that are behind
@@ -147,8 +153,19 @@ void init() {
 bool animate_rotation = true;
 glm::vec3 rotation_angles{0.0f};
 glm::vec3 rotation_speed{1.0f};
+
 glm::vec3 scale_factors{0.250f, 1.0f, 1.0f};
+
 glm::vec3 translation{1.0f, 1.0f, 1.0f};
+
+float fov = 80.0f;
+
+// Perspective projection
+glm::mat4 projection = glm::perspective(glm::radians(fov), 1.0f, 0.1f, 10.0f);
+
+// Move the scene backwards relative to the camera
+glm::mat4 view = glm::translate(glm::vec3{0.0f, 0.0f, -1.5f});
+
 
 
 void ui() {
@@ -171,6 +188,12 @@ void ui() {
         // Add a slider to edit the 3 components of the translation vector, setting the range to be [-1.0, 1.0]
         ImGui::DragFloat3("Translation", &translation[0], 0.1f);
 
+        //Adding a slider to edit POV using boolean of perspective
+        if (ImGui::SliderFloat("Camera FOV", &fov, 0.0f, 180.0f)) {
+            projection = glm::perspective(glm::radians(fov), (float) window_width / (float) window_height, 0.1f, 10.0f);
+        }
+
+
     }
     // Since ImGUI is an immediate mode UI with hidden internal state, we need to explicitly tell it that
     // we are done talking about the current window, to do that we call End();
@@ -178,10 +201,38 @@ void ui() {
 }
 
 
-void draw_cube(glm::mat4 model) {
-    glUniformMatrix4fv( xyzw_multipliers_location, 1, GL_FALSE, &model[0][0] );
-    glDrawArrays( GL_TRIANGLES, 0, NUM_VERTICES );
+//Did not implement "If the left mouse is down and ImGUI isn't capturing it, 
+// use the mouse position from previous calls to the callback to calculate a change in mouse position (a delta). 
+// Then this can be used to update the x and y components of a global camera_position variable, and then used to recalculate the view matrix. "
+void mousemove_callback(GLFWwindow *window, double xpos, double ypos) {
+
+    int pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+
+    if (pressed == GLFW_PRESS && !ImGuiManager::want_capture_mouse()) {
+        float x = (float)xpos / (float)window_width - 0.5;
+        float y = 0.5 - (float)ypos / (float)window_height;
+
+        
+
+        view = glm::translate(glm::vec3(x, y, -1.5f));
+    }
 }
+
+
+void framebuffersizeCallback(GLFWwindow *window, int width, int height) {
+    window_width = width;
+    window_height = height;
+    glViewport(0, 0, width, height);
+    projection = glm::perspective(glm::radians(80.0f), (float) width / (float) height, 0.1f, 10.0f);
+    
+}
+
+void draw_cube(glm::mat4 model) {
+
+    glm::mat4 projection_view_model = projection * view *model;
+
+    glUniformMatrix4fv( xyzw_multipliers_location, 1, GL_FALSE, &projection_view_model[0][0] );
+    glDrawElements( GL_TRIANGLES, NUM_ELEMENTS, GL_UNSIGNED_INT, nullptr);}
 
 void draw(GLFWwindow *window, ImGuiManager& imgui_manager) {
     // Tell ImGUI we are starting a new frame
@@ -253,6 +304,20 @@ void draw(GLFWwindow *window, ImGuiManager& imgui_manager) {
     imgui_manager.render();
 
     glfwSwapBuffers(window);
+
+    frame_times.push_back(delta);
+    while (frame_times.size() > 100) {
+	frame_times.pop_front();}
+
+    float sum = 0.0f;
+    for (const auto &dt: frame_times) {
+            sum += dt;
+        }
+    float average_dt = sum / (float) frame_times.size();
+    float average_fps = 1.0f / average_dt;
+
+    std::string title = "Lab 6: FPS: " + std::to_string(average_fps);
+    glfwSetWindowTitle(window, title.c_str());
 }
 
 void key_callback(GLFWwindow *window, int key, int /*scancode*/, int /*action*/, int /*mods*/) {
@@ -288,11 +353,15 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif // __APPLE__
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(window_width, window_height, WINDOW_TITLE, nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
+    //glViewport(0, 0, window_width, window_height);
+    glfwSetFramebufferSizeCallback(window, framebuffersizeCallback);
+
+     glfwSetCursorPosCallback(window, mousemove_callback);
 
     glfwSwapInterval(V_SYNC ? 1 : 0);
 
