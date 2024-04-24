@@ -39,8 +39,8 @@ using uint = unsigned int;
 
 // Some constant window properties we define here for now, since we currently don't handle
 // window resizing.
-#define WINDOW_WIDTH 512
-#define WINDOW_HEIGHT 512
+// #define WINDOW_WIDTH 512
+// #define WINDOW_HEIGHT 512
 #define WINDOW_TITLE "Lab 6"
 
 // A flag to enable or disable vsync (aka frame limiting)
@@ -50,6 +50,8 @@ const int NUM_SIDES = 6;
 const int NUM_TRIANGLES = 2 * NUM_SIDES;
 const int NUM_VERTICES = 3 * NUM_TRIANGLES;
 
+int window_width = 512;
+int window_height = 512;
 
 
 // This time create a struct representing the data of a single vertex, because we will be
@@ -152,9 +154,10 @@ glm::vec3 scale_factors{0.250f, 1.0f, 1.0f};
 
 glm::vec3 translation{1.0f, 1.0f, 1.0f};
 
+float fov = 80.0f;
 
 // Perspective projection
-glm::mat4 projection = glm::perspective(glm::radians(80.0f), 1.0f, 0.1f, 10.0f);
+glm::mat4 projection = glm::perspective(glm::radians(fov), 1.0f, 0.1f, 10.0f);
 
 // Move the scene backwards relative to the camera
 glm::mat4 view = glm::translate(glm::vec3{0.0f, 0.0f, -1.5f});
@@ -181,12 +184,40 @@ void ui() {
         // Add a slider to edit the 3 components of the translation vector, setting the range to be [-1.0, 1.0]
         ImGui::DragFloat3("Translation", &translation[0], 0.1f);
 
+        //Adding a slider to edit POV using boolean of perspective
+        if (ImGui::SliderFloat("Camera FOV", &fov, 0.0f, 180.0f)) {
+            projection = glm::perspective(glm::radians(fov), (float) window_width / (float) window_height, 0.1f, 10.0f);
+        }
+
+
     }
     // Since ImGUI is an immediate mode UI with hidden internal state, we need to explicitly tell it that
     // we are done talking about the current window, to do that we call End();
     ImGui::End();
 }
 
+void mousemove_callback(GLFWwindow *window, double xpos, double ypos) {
+
+    int pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+
+    if (pressed == GLFW_PRESS && !ImGuiManager::want_capture_mouse()) {
+        float x = (float)xpos / (float)window_width - 0.5;
+        float y = 0.5 - (float)ypos / (float)window_height;
+
+        
+
+        view = glm::translate(glm::vec3(x, y, -1.5f));
+    }
+}
+
+
+void framebuffersizeCallback(GLFWwindow *window, int width, int height) {
+    window_width = width;
+    window_height = height;
+    glViewport(0, 0, width, height);
+    projection = glm::perspective(glm::radians(80.0f), (float) width / (float) height, 0.1f, 10.0f);
+    
+}
 
 void draw_cube(glm::mat4 model) {
 
@@ -301,11 +332,15 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif // __APPLE__
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(window_width, window_height, WINDOW_TITLE, nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
+    //glViewport(0, 0, window_width, window_height);
+    glfwSetFramebufferSizeCallback(window, framebuffersizeCallback);
+
+     glfwSetCursorPosCallback(window, mousemove_callback);
 
     glfwSwapInterval(V_SYNC ? 1 : 0);
 
